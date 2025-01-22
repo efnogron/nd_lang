@@ -137,3 +137,60 @@ Reset: After results are formatted and stored
    - Ready for next sentence
 
 ## Implementation Checklist
+
+## 1. Pre-Processing Setup
+
+- [ ] Convert guideline PDF to vector store
+
+  - Use existing code from old implementation
+  - Ensure proper chunking for medical context
+  - Store in Chroma DB
+
+- [ ] Process article into sentence format
+  - Split into sentences while preserving context
+  - Create structured format:
+    ```typescript
+    {
+      sentence: string;
+      context: {
+        heading: string;
+        subheading: string;
+        paragraph: string;
+      }
+    }
+    ```
+
+## 2. Vector Search Tool
+
+- [ ] Remove existing Tavily search tool
+- [ ] Implement vector search tool
+  ```typescript
+  {
+    name: "search_guidelines",
+    description: "Sucht in den medizinischen Leitlinien",
+    parameters: {
+      query: string,
+      top_k: number
+    }
+  }
+  ```
+
+## 3. Agent Setup
+
+- [ ] Update system prompt for medical verification task
+- [ ] Modify state management for our use case
+- [ ] Implement human interaction loop
+- [ ] Add sentence iteration logic
+
+## 4. Testing
+
+- [ ] Update integration test for new workflow
+- [ ] Add test for vector search tool
+- [ ] Add test for sentence processing
+
+## 5. Configuration
+
+- [ ] Update configuration.ts with new parameters
+- [ ] Set up environment variables for vector store
+
+This represents the minimal set of changes needed to transform the existing project into our new architecture. Would you like me to elaborate on any of these points?

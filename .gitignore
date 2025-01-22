@@ -19,5 +19,13 @@ dist
 
 input/*
 node_modules/*
-static/*
+static/
 
+
+venv/
+.venv/
+
+chroma.log
+vector_store/
+
+.DS_Store
