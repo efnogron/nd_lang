@@ -17,3 +17,7 @@ dist
 .env
 .ipynb_checkpoints
 
+input/*
+node_modules/*
+static/*
+
