@@ -22,7 +22,6 @@ module.exports = {
     "*.d.ts",
   ],
   rules: {
-    "no-process-env": 2,
     "no-instanceof/no-instanceof": 2,
     "@typescript-eslint/explicit-module-boundary-types": 0,
     "@typescript-eslint/no-empty-function": 0,

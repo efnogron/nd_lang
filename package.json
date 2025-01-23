@@ -20,15 +20,18 @@
   "dependencies": {
     "@langchain/anthropic": "^0.3.1",
     "@langchain/community": "^0.3.26",
-    "@langchain/core": "^0.3.29",
+    "@langchain/core": "^0.3.33",
     "@langchain/langgraph": "^0.2.8",
     "@langchain/openai": "^0.3.17",
+    "@pinecone-database/pinecone": "^4.1.0",
     "@types/pdf-parse": "^1.1.4",
+    "@types/pdfjs-dist": "^2.10.378",
     "@types/uuid": "^10.0.0",
     "chromadb": "^1.10.3",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "langchain": "^0.3.12",
     "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^4.10.38",
     "uuid": "^11.0.5"
   },
   "devDependencies": {

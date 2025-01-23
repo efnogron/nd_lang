@@ -12,24 +12,33 @@ async function callModel(
   state: typeof MessagesAnnotation.State,
   config: RunnableConfig,
 ): Promise<typeof MessagesAnnotation.Update> {
-  /** Call the LLM powering our agent. **/
+  console.log(
+    "[Graph] Calling model with state:",
+    JSON.stringify(state, null, 2),
+  );
   const configuration = ensureConfiguration(config);
+  console.log(
+    "[Graph] Using configuration:",
+    JSON.stringify(configuration, null, 2),
+  );
 
-  // Feel free to customize the prompt, model, and other logic!
+  console.log("[Graph] Loading chat model");
   const model = (await loadChatModel(configuration.model)).bindTools(TOOLS);
+  console.log("[Graph] Model loaded and tools bound");
 
-  const response = await model.invoke([
-    {
-      role: "system",
-      content: configuration.systemPromptTemplate.replace(
-        "{system_time}",
-        new Date().toISOString(),
-      ),
-    },
-    ...state.messages,
-  ]);
+  const systemMessage = {
+    role: "system",
+    content: configuration.systemPromptTemplate.replace(
+      "{system_time}",
+      new Date().toISOString(),
+    ),
+  };
+  console.log("[Graph] System message:", systemMessage);
 
-  // We return a list, because this will get added to the existing list
+  console.log("[Graph] Invoking model");
+  const response = await model.invoke([systemMessage, ...state.messages]);
+  console.log("[Graph] Model response:", response);
+
   return { messages: [response] };
 }
 
@@ -37,18 +46,20 @@ async function callModel(
 function routeModelOutput(state: typeof MessagesAnnotation.State): string {
   const messages = state.messages;
   const lastMessage = messages[messages.length - 1];
-  // If the LLM is invoking tools, route there.
+  console.log("[Graph] Routing model output. Last message:", lastMessage);
+
   if ((lastMessage as AIMessage)?.tool_calls?.length || 0 > 0) {
+    console.log("[Graph] Routing to tools");
     return "tools";
-  }
-  // Otherwise end the graph.
-  else {
+  } else {
+    console.log("[Graph] Routing to end");
     return "__end__";
   }
 }
 
 // Define a new graph. We use the prebuilt MessagesAnnotation to define state:
 // https://langchain-ai.github.io/langgraphjs/concepts/low_level/#messagesannotation
+console.log("[Graph] Initializing workflow");
 const workflow = new StateGraph(MessagesAnnotation, ConfigurationSchema)
   // Define the two nodes we will cycle between
   .addNode("callModel", callModel)
@@ -69,7 +80,9 @@ const workflow = new StateGraph(MessagesAnnotation, ConfigurationSchema)
 
 // Finally, we compile it!
 // This compiles it into a graph you can invoke and deploy.
+console.log("[Graph] Compiling workflow");
 export const graph = workflow.compile({
   interruptBefore: [], // if you want to update the state before calling the tools
   interruptAfter: [],
 });
+console.log("[Graph] Workflow compiled");
