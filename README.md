@@ -11,9 +11,9 @@ Single ReAct agent that processes one sentence at a time to verify medical claim
 Purpose: Coordinates the entire verification process including query formulation, evidence assessment, and human interaction.
 Flow:
 
-- is initialized with next sentence + context from stored article structure
+- fetches next sentence + context from stored article structure using fetch_sentence_tool
 - formulates search queries
-- uses vector search tool to find relevant guideline sections
+- uses vector search tool to find relevant guideline sections using search_guidelines tool
 - assesses evidence against the claim
 - presents findings to human operator in chat
 - waits for human feedback/decision
@@ -22,12 +22,12 @@ Flow:
 
 ## Tools
 
-### Vector Search Tool
+### search_guidelines Tool
 
 Purpose: Find relevant sections in the medical guidelines
 Task:
 
-- Execute semantic search in the pre-indexed guideline vector store
+- Execute semantic search in the pre-indexed guideline vector store on pinecone
 - Return the most relevant guideline sections
 
 ## Human Interaction
@@ -54,8 +54,6 @@ Users can:
 - "This evidence isn't relevant enough, search again"
 - "This verification looks good, proceed to next sentence"
 - "Skip this sentence, it's not a medical claim"
-
-You're right. Let me simplify the state section of the README.md to match our streamlined architecture:
 
 ## State Management
 
@@ -118,8 +116,8 @@ Reset: After results are formatted and stored
 
 1. **Start New Sentence**
 
-   - Load next sentence and context
-   - All previous state is cleared
+   - fetches next sentence and context
+   - previous sentence state is cleared
 
 2. **Search and Verify**
 
@@ -132,38 +130,49 @@ Reset: After results are formatted and stored
    - If approved: proceed to next sentence
    - If rejected: agent reformulates and searches again
 
-4. **Reset**
-   - Clear all state
-   - Ready for next sentence
-
 ## Implementation Checklist
 
 ## 1. Pre-Processing Setup
 
-- [ ] Convert guideline PDF to vector store
+- [x] Convert guideline PDF to vector store
+- uses index_guidelines.ts
+- uses pinecone
+- runs from CLI, not from LangGraph Studio
 
-  - Use existing code from old implementation
-  - Ensure proper chunking for medical context
-  - Store in Chroma DB
-
-- [ ] Process article into sentence format
+- [x] Process article into sentence format
   - Split into sentences while preserving context
-  - Create structured format:
-    ```typescript
+  - uses process_article.ts
+  - stores processed article in input/[topic]/article/processed_article.json
+  - article is stored in structured format:
+
+```json
+{
+  "metadata": {
+    "title": string,
+    "language": string,
+    "processingDate": ISO-8601 date
+  },
+  "sentences": [
     {
-      sentence: string;
-      context: {
-        heading: string;
-        subheading: string;
-        paragraph: string;
+      "id": UUID,
+      "text": string,
+      "context": {
+        "section": string,
+        "subsection": string (optional),
+        "paragraph": string
+      },
+      "metadata": {
+        "isBulletPoint": boolean,
+        "isHeading": boolean
       }
     }
-    ```
+  ]
+}
+```
 
 ## 2. Vector Search Tool
 
-- [ ] Remove existing Tavily search tool
-- [ ] Implement vector search tool
+- [x] Implement vector search tool
   ```typescript
   {
     name: "search_guidelines",
@@ -192,5 +201,3 @@ Reset: After results are formatted and stored
 
 - [ ] Update configuration.ts with new parameters
 - [ ] Set up environment variables for vector store
-
-This represents the minimal set of changes needed to transform the existing project into our new architecture. Would you like me to elaborate on any of these points?

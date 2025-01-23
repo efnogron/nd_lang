@@ -15,7 +15,8 @@
     "test:int": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPattern=\\.int\\.test\\.ts$",
     "lint": "eslint src",
     "format": "prettier --write .",
-    "index-guidelines": "node --loader ts-node/esm src/react_agent/preprocessing/index_guidelines.ts"
+    "index-guidelines": "node --loader ts-node/esm src/react_agent/preprocessing/index_guidelines.ts",
+    "process-article": "node --loader ts-node/esm src/react_agent/preprocessing/process_article.ts"
   },
   "dependencies": {
     "@langchain/anthropic": "^0.3.1",
@@ -23,11 +24,14 @@
     "@langchain/core": "^0.3.33",
     "@langchain/langgraph": "^0.2.8",
     "@langchain/openai": "^0.3.17",
+    "@langchain/textsplitters": "^0.1.0",
     "@pinecone-database/pinecone": "^4.1.0",
     "@types/pdf-parse": "^1.1.4",
     "@types/pdfjs-dist": "^2.10.378",
     "@types/uuid": "^10.0.0",
     "chromadb": "^1.10.3",
+    "compromise": "^14.14.4",
+    "compromise-sentences": "^0.3.0",
     "dotenv": "^16.4.7",
     "langchain": "^0.3.12",
     "pdf-parse": "^1.1.1",
