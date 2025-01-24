@@ -6,9 +6,9 @@ import { Tool } from "@langchain/core/tools";
 
 export class ApplyReasoningTool extends Tool {
   name = "apply_reasoning";
-  description = "Apply reasoning to the sentence.";
+  description = "use this to evaluate if the sentence is valid or not. pass in the statement that is to be verified.";
 
-  async _call(input: string): Promise<typeof MessagesAnnotation.Update> {
+  async _call(state: typeof MessagesAnnotation.State): Promise<typeof MessagesAnnotation.Update> {
     const model = await loadChatModel("deepseek/deepseek-chat");
 
     const systemMessage = {
@@ -17,7 +17,7 @@ export class ApplyReasoningTool extends Tool {
     };
 
     // Generate analysis
-    const response = await model.invoke([systemMessage, input]);
+    const response = await model.invoke([systemMessage, ...state.messages]);
 
     return {
       messages: [
