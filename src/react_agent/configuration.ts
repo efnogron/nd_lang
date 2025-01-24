@@ -21,13 +21,10 @@ export const ConfigurationSchema = Annotation.Root({
 export function ensureConfiguration(
   config: RunnableConfig,
 ): typeof ConfigurationSchema.State {
-  /**
-   * Ensure the defaults are populated.
-   */
   const configurable = config.configurable ?? {};
   return {
     systemPromptTemplate:
       configurable.systemPromptTemplate ?? SYSTEM_PROMPT_TEMPLATE,
-    model: configurable.model ?? "gpt-4o",
+    model: configurable.model ?? "gpt-4o-mini",
   };
 }

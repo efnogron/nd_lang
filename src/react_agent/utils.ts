@@ -1,4 +1,5 @@
 //utils.ts
+import { ChatOpenAI } from "@langchain/openai";
 import { initChatModel } from "langchain/chat_models/universal";
 
 /**
@@ -8,8 +9,20 @@ import { initChatModel } from "langchain/chat_models/universal";
  */
 export async function loadChatModel(fullySpecifiedName: string) {
   const index = fullySpecifiedName.indexOf("/");
+
+  // Handle DeepSeek models
+  if (fullySpecifiedName.startsWith("deepseek/")) {
+    const model = fullySpecifiedName.split("/")[1];
+    return new ChatOpenAI({
+      modelName: model,
+      openAIApiKey: process.env.DEEPSEEK_API_KEY,
+      configuration: {
+        baseURL: "https://api.deepseek.com/v1",
+      },
+    });
+  }
+
   if (index === -1) {
-    // If there's no "/", assume it's just the model
     return await initChatModel(fullySpecifiedName);
   } else {
     const provider = fullySpecifiedName.slice(0, index);
