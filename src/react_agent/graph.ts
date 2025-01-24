@@ -9,7 +9,7 @@ import { FetchNextSentenceTool } from "./tools/fetch_next_sentence.js";
 import { GuidelineSearchTool } from "./tools/search_guideline.js";
 import { loadChatModel } from "./utils.js";
 import { MASTER_AGENT_PROMPT } from "./prompts.js";
-import { ApplyReasoningTool } from "./tools/apply_reasoning.js";
+import { applyReasoningNode } from "./tools/apply_reasoning.js";
 
 // Define the function that calls the model
 async function masterAgent(
@@ -21,7 +21,7 @@ async function masterAgent(
   const model = (await loadChatModel(configuration.model)).bindTools([
     new FetchNextSentenceTool(),
     new GuidelineSearchTool(),
-    new ApplyReasoningTool(),
+    applyReasoningNode,
   ]);
 
   const systemMessage = {
@@ -68,7 +68,6 @@ function routeModelOutput(state: typeof MessagesAnnotation.State): string {
 // Create instances of our tools
 const guidelineNode = new ToolNode([new GuidelineSearchTool()]);
 const sentenceNode = new ToolNode([new FetchNextSentenceTool()]);
-const applyReasoningNode = new ToolNode([new ApplyReasoningTool()]);
 // Define a new graph. We use the prebuilt MessagesAnnotation to define state:
 // https://langchain-ai.github.io/langgraphjs/concepts/low_level/#messagesannotation
 console.log("[Graph] Initializing workflow");
