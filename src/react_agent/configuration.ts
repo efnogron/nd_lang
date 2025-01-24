@@ -1,3 +1,4 @@
+//configuration.ts
 /**
  * Define the configurable parameters for the agent.
  */
@@ -27,6 +28,6 @@ export function ensureConfiguration(
   return {
     systemPromptTemplate:
       configurable.systemPromptTemplate ?? SYSTEM_PROMPT_TEMPLATE,
-    model: configurable.model ?? "gpt-4o-mini",
+    model: configurable.model ?? "gpt-4o",
   };
 }
