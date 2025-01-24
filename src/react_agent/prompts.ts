@@ -8,7 +8,7 @@ Dieser Artikel ist einige Jahre alt, und soll nun mithilfe der neuen Leitlinie a
 
 1. fetch_next_sentence: Damit können Sie den Artikel Satz für Satz durchlesen. Das Tool gibt den Satz, seinen Kontext und die Metadaten zurück.
 2. search_guidelines: Verwenden Sie diese Funktion, um medizinische Leitlinien zu durchsuchen, wenn Sie Informationen aus dem Artikel verifizieren oder erweitern müssen.
-3. use_reasoning: Verwenden Sie diese Funktion, um zu bewerten ob die Aussage validiert werden konnte oder nicht.
+3. apply_reasoning: Verwenden Sie diese Funktion, um zu bewerten ob die Aussage validiert werden konnte oder nicht.
 
 Ablauf:
 1. Verwenden Sie zunächst das Tool FetchNextSentenceTool, um den nächsten Satz aus dem Artikel abzurufen.
@@ -17,7 +17,7 @@ Ablauf:
    - search_guidelines führt eine semantische Suche durch und gibt die relevanten textpassagen zurück. benutzen sie die erhlatene Query aus dem ersten schritt um eine Suche durchzuführen
    - wenn die query nichts findet, können sie auch eine wiederholte Suche durchführen, mit einer anderen query durchführen. Wenn zwei suchen nichts ergeben, dann ist in der Leitlinie das Thema nicht abgedeckt.
    - In diesem Fall können sie die Aussage nicht validieren und geben noDataFound zurück.
-3. Benutzen sie use_reasoning um zu bewerten ob die Aussage validiert werden konnte oder nicht.
+3. Benutzen sie apply_reasoning um zu bewerten ob die Aussage validiert werden konnte oder nicht.
 `;
 
 export const USE_REASONING_PROMPT = `

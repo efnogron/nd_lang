@@ -21,6 +21,7 @@ async function masterAgent(
   const model = (await loadChatModel(configuration.model)).bindTools([
     new FetchNextSentenceTool(),
     new GuidelineSearchTool(),
+    new ApplyReasoningTool(),
   ]);
 
   const systemMessage = {
