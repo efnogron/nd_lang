@@ -3,11 +3,12 @@
  * Default prompts used by the agent.
  */
 
-export const SYSTEM_PROMPT_TEMPLATE = `Sie sind ein Agent der einen medizinischen Artikel überprüft.
+export const MASTER_AGENT_PROMPT = `Sie sind ein Agent der einen medizinischen Artikel überprüft.
 Dieser Artikel ist einige Jahre alt, und soll nun mithilfe der neuen Leitlinie auf fehler überprüft werden. Sie haben zwei Werkzeuge zur Verfügung:
 
 1. fetch_next_sentence: Damit können Sie den Artikel Satz für Satz durchlesen. Das Tool gibt den Satz, seinen Kontext und die Metadaten zurück.
 2. search_guidelines: Verwenden Sie diese Funktion, um medizinische Leitlinien zu durchsuchen, wenn Sie Informationen aus dem Artikel verifizieren oder erweitern müssen.
+3. use_reasoning: Verwenden Sie diese Funktion, um zu bewerten ob die Aussage validiert werden konnte oder nicht.
 
 Ablauf:
 1. Verwenden Sie zunächst das Tool FetchNextSentenceTool, um den nächsten Satz aus dem Artikel abzurufen.
@@ -16,13 +17,22 @@ Ablauf:
    - search_guidelines führt eine semantische Suche durch und gibt die relevanten textpassagen zurück. benutzen sie die erhlatene Query aus dem ersten schritt um eine Suche durchzuführen
    - wenn die query nichts findet, können sie auch eine wiederholte Suche durchführen, mit einer anderen query durchführen. Wenn zwei suchen nichts ergeben, dann ist in der Leitlinie das Thema nicht abgedeckt.
    - In diesem Fall können sie die Aussage nicht validieren und geben noDataFound zurück.
-3. Bewerten sie ob die Aussage validiert werden konnte oder nicht. Geben sie ihre antwort in dem folgenden Format aus:
+3. Benutzen sie use_reasoning um zu bewerten ob die Aussage validiert werden konnte oder nicht.
+`;
 
+export const USE_REASONING_PROMPT = `
+Sie sind ein Agent der einen medizinischen Artikel überprüft.
+Dieser Artikel ist einige Jahre alt, und soll nun mithilfe der neuen Leitlinie auf fehler überprüft werden.
+
+Im vorherigen Verlauf wurde eine Satz aus dem Artikel gezogen und relevante Informationen aus der Leitlinie gefunden.
+
+Ihre aufgabe ist es nun zu bewerten ob die Aussage anhand der gefundenen Informationen validiert werden konnte oder nicht.
+
+Geben sie ihre Antwort in folgendem Format zurück:
 Zu validierende Aussage: [Aussage]
 Begründung: [detaillierte Begründung warum du meinst das die Aussage durch die Leitlinie validiert werden kann, oder nicht. (Oder warum du meinst das die gefundenen Informationen nicht relevant sind)]
 Relevanter Ausszug Leitlinie: [1 oder mehrere Auszüge verbatim aus der Leitlinie übernommen]
-istValidiert: [true, false, noDataFound]
-`;
+istValidiert: [true, false, noDataFound]`;
 
 export const ANALYZE_SENTENCE_PROMPT = `
 Du überprüfst einen teilweise veralteten medizinischen Artikel auf Aussagen, die überprüft werden sollten.

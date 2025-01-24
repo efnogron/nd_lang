@@ -8,6 +8,8 @@ import { ConfigurationSchema, ensureConfiguration } from "./configuration.js";
 import { FetchNextSentenceTool } from "./tools/fetch_next_sentence.js";
 import { GuidelineSearchTool } from "./tools/search_guideline.js";
 import { loadChatModel } from "./utils.js";
+import { MASTER_AGENT_PROMPT } from "./prompts.js";
+import { ApplyReasoningTool } from "./tools/apply_reasoning.js";
 
 // Define the function that calls the model
 async function masterAgent(
@@ -23,7 +25,7 @@ async function masterAgent(
 
   const systemMessage = {
     role: "system",
-    content: configuration.systemPromptTemplate,
+    content: MASTER_AGENT_PROMPT,
   };
 
   const response = await model.invoke([systemMessage, ...state.messages]);
@@ -51,6 +53,8 @@ function routeModelOutput(state: typeof MessagesAnnotation.State): string {
     return "fetch_nextsentence";
   } else if (toolName === "search_guidelines") {
     return "guidelinetool";
+  } else if (toolName === "apply_reasoning") {
+    return "apply_reasoning";
   } else if (toolName === "analyze_sentence") {
     // This should never happen as analyze_sentence is only called from fetch_nextsentence
     console.warn("[Graph] Unexpected direct call to analyze_sentence");
@@ -63,14 +67,17 @@ function routeModelOutput(state: typeof MessagesAnnotation.State): string {
 // Create instances of our tools
 const guidelineNode = new ToolNode([new GuidelineSearchTool()]);
 const sentenceNode = new ToolNode([new FetchNextSentenceTool()]);
+const applyReasoningNode = new ToolNode([new ApplyReasoningTool()]);
 // Define a new graph. We use the prebuilt MessagesAnnotation to define state:
 // https://langchain-ai.github.io/langgraphjs/concepts/low_level/#messagesannotation
 console.log("[Graph] Initializing workflow");
 const workflow = new StateGraph(MessagesAnnotation, ConfigurationSchema)
   .addNode("masterAgent", masterAgent)
+  .addNode("apply_reasoning", applyReasoningNode)
   .addNode("guidelinetool", guidelineNode)
   .addNode("fetch_nextsentence", sentenceNode)
   .addEdge("__start__", "masterAgent")
+  .addEdge("apply_reasoning", "masterAgent")
   .addEdge("guidelinetool", "masterAgent")
   .addEdge("fetch_nextsentence", "masterAgent")
   .addConditionalEdges("masterAgent", routeModelOutput);
