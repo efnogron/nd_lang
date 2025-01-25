@@ -37,3 +37,14 @@ export interface ArticleContext {
     };
     sentences: ArticleSentence[];
   }
+
+export interface AnalysisOutput {
+  query: string | null;
+  reasoning: string;
+  needs_verification: boolean;
+}
+export interface AnalysisOutput {
+  query: string | null;
+  reasoning: string;
+  needs_verification: boolean;
+}

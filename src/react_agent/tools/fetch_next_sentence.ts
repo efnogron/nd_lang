@@ -1,23 +1,22 @@
 //tools/fetch_next_sentence.ts
 import path from "path";
 
-import { Tool } from "@langchain/core/tools";
+import { Tool, ToolRunnableConfig } from "@langchain/core/tools";
 import fs from "fs/promises";
 import { ArticleSentence, ProcessedArticle } from "../types.js";
 import { loadChatModel } from "../utils.js";
-import { MessagesAnnotation } from "@langchain/langgraph";
 import { ANALYZE_SENTENCE_PROMPT } from "../prompts.js";
 import { z } from "zod";
+import { Command } from "@langchain/langgraph";
+import { ToolMessage } from "@langchain/core/messages";
+import { CallbackManagerForToolRun } from "@langchain/core/callbacks/manager";
+import { AnalysisOutput } from "../types.js";
 
-interface AnalysisOutput {
-  query: string | null;
-  reasoning: string;
-  needs_verification: boolean;
-}
 
 export class FetchNextSentenceTool extends Tool {
   name = "fetch_next_sentence";
-  description = "Fetches and analyzes the next sentence from the article.";
+  description =
+    "Fetches the next sentence from the article that needs verification.";
   private currentIndex = 0;
   private articleContent: ProcessedArticle | null = null;
 
@@ -39,9 +38,7 @@ export class FetchNextSentenceTool extends Tool {
   }
 
   async analyzeSentence(sentence: ArticleSentence): Promise<{
-    needs_verification: boolean;
-    query: string | null;
-    reasoning: string;
+    analysisOutput: AnalysisOutput;
     filledPrompt: string;
   }> {
     console.log("[FetchNextSentenceTool] Sentence text:", sentence.text);
@@ -83,7 +80,7 @@ export class FetchNextSentenceTool extends Tool {
 
       console.log("[FetchNextSentenceTool] Generated output:", response);
       return {
-        ...response,
+        analysisOutput: response,
         filledPrompt,
       };
     } catch (e) {
@@ -92,15 +89,21 @@ export class FetchNextSentenceTool extends Tool {
         e,
       );
       return {
-        query: null,
-        reasoning: "",
-        needs_verification: false,
+        analysisOutput: {
+          query: null,
+          reasoning: "",
+          needs_verification: false,
+        },
         filledPrompt,
       };
     }
   }
 
-  async _call(): Promise<typeof MessagesAnnotation.Update> {
+  async _call(
+    _: string,
+    _runManager?: CallbackManagerForToolRun,
+    config?: ToolRunnableConfig,
+  ): Promise<Command> {
     console.log("[FetchNextSentenceTool] Starting fetch");
     await this.loadArticleIfNeeded();
 
@@ -114,15 +117,10 @@ export class FetchNextSentenceTool extends Tool {
       const currentSentence = this.articleContent.sentences[this.currentIndex];
       this.currentIndex++;
 
-      console.log(
-        "[FetchNextSentenceTool] Checking sentence:",
-        currentSentence.id,
-      );
-
-      const { needs_verification, query, reasoning, filledPrompt } =
+      const { analysisOutput, filledPrompt } =
         await this.analyzeSentence(currentSentence);
 
-      if (!needs_verification) {
+      if (!analysisOutput.needs_verification) {
         console.log(
           "[FetchNextSentenceTool] Sentence does not need verification, continuing...",
         );
@@ -134,26 +132,47 @@ export class FetchNextSentenceTool extends Tool {
         currentSentence.id,
       );
 
-      return {
-        messages: [
-          {
-            role: "system",
-            content: filledPrompt,
-          },
-          {
-            role: "assistant",
-            content: `
-Generierte Query: ${query}
-Begründung: ${reasoning}
+      const toolCallId = config?.toolCall?.id || "default_tool_call";
+
+      return new Command({
+        update: {
+          messages: [
+            new ToolMessage({
+              content: `System Prompt:
+${filledPrompt}
+
+Generierte Query: ${analysisOutput.query}
+Begründung: ${analysisOutput.reasoning}
 
 Bitte überprüfen Sie diese Aussage mithilfe der Leitlinie.`,
-          },
-        ],
-      };
+              tool_call_id: toolCallId,
+              name: "fetch_next_sentence",
+            }),
+          ],
+          article: currentSentence,
+          analysisOutput: analysisOutput,
+        },
+      });
     }
 
-    return {
-      messages: ["Ende des Artikels erreicht."],
-    };
+    // End of article reached
+    const toolCallId = config?.toolCall?.id || "default_tool_call";
+    return new Command({
+      update: {
+        messages: [
+          new ToolMessage({
+            content: "Ende des Artikels erreicht.",
+            tool_call_id: toolCallId,
+            name: "fetch_next_sentence",
+          }),
+        ],
+        article: null,
+        analysisOutput: {
+          query: null,
+          reasoning: "Ende des Artikels erreicht.",
+          needs_verification: false,
+        },
+      },
+    });
   }
 }

@@ -16,7 +16,7 @@ Ablauf:
    - verwenden Sie search_guidelines, um sie nach informationen zu der aktuellen Aussage zu suchen
    - search_guidelines führt eine semantische Suche durch und gibt die relevanten textpassagen zurück. benutzen sie die erhlatene Query aus dem ersten schritt um eine Suche durchzuführen
    - wenn die query nichts findet, können sie auch eine wiederholte Suche durchführen, mit einer anderen query durchführen. Wenn zwei suchen nichts ergeben, dann ist in der Leitlinie das Thema nicht abgedeckt.
-3. Benutzen Sie die analyse aus dem nachrichten Verlauf um zu bewerten ob die Aussage validiert werden konnte oder nicht.
+3. Benutzen Sie die analyse aus dem nachrichten Verlauf um zu bewerten ob die Aussage validiert werden konnte oder nicht. Schreiben sie ihre zusammenfassung in der letzten Nachricht. Warten sie dann auf weitere Anfragen.
 `;
 
 export const USE_REASONING_PROMPT = `

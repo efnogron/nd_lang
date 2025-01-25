@@ -22,7 +22,7 @@
     "@langchain/anthropic": "^0.3.1",
     "@langchain/community": "^0.3.26",
     "@langchain/core": "^0.3.33",
-    "@langchain/langgraph": "^0.2.8",
+    "@langchain/langgraph": "^0.2.41",
     "@langchain/openai": "^0.3.17",
     "@langchain/textsplitters": "^0.1.0",
     "@pinecone-database/pinecone": "^4.1.0",
@@ -40,9 +40,9 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.9.1",
+    "@jest/globals": "^29.7.0",
     "@tsconfig/recommended": "^1.0.7",
     "@types/jest": "^29.5.0",
     "@types/node": "^22.10.7",

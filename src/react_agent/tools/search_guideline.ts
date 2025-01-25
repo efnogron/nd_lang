@@ -3,9 +3,13 @@
  * This file defines the tools available to the ReAct agent.
  * Tools are functions that the agent can use to interact with external systems or perform specific tasks.
  */
-import { Tool } from "@langchain/core/tools";
+import { Tool, ToolRunnableConfig } from "@langchain/core/tools";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Pinecone } from "@pinecone-database/pinecone";
+import { Command } from "@langchain/langgraph";
+import { ToolMessage } from "@langchain/core/messages";
+import { CallbackManagerForToolRun } from "@langchain/core/callbacks/manager";
+
 const INDEX_NAME = "medical-guidelines";
 const NAMESPACE = "asthma";
 
@@ -41,13 +45,19 @@ export class GuidelineSearchTool extends Tool {
   /**
    * Searches the medical guidelines using semantic similarity
    * @param {string} query - The search query
-   * @returns {Promise<string>} Formatted string containing the most relevant guideline sections
+   * @param {any} config - The configuration object
+   * @returns {Promise<Command>} A Command with just the content string and needsReasoning flag
    * @throws {Error} If there's an issue connecting to Pinecone or processing embeddings
    */
-  async _call(query: string): Promise<string> {
+  async _call(
+    query: string,
+    _runManager: CallbackManagerForToolRun,
+    config: ToolRunnableConfig,
+  ): Promise<Command> {
     try {
-      const index = this.pineconeClient.index(INDEX_NAME);
+      const toolCallId = config?.toolCall?.id || "default_tool_call";
 
+      const index = this.pineconeClient.index(INDEX_NAME);
       const [queryEmbedding] = await this.embeddings.embedDocuments([query]);
 
       const results = await index.namespace(NAMESPACE).query({
@@ -67,12 +77,35 @@ export class GuidelineSearchTool extends Tool {
         })
         .join("\n\n");
 
-      return (
-        formattedResults || "No relevant information found in the guidelines."
-      );
+      const content =
+        formattedResults || "No relevant information found in the guidelines.";
+
+      return new Command({
+        update: {
+          messages: [
+            new ToolMessage({
+              content,
+              tool_call_id: toolCallId,
+            }),
+          ],
+          needsReasoning: true,
+        },
+      });
     } catch (error) {
       console.error("[GuidelineSearchTool] Error during search:", error);
-      return "Error searching the medical guidelines.";
+      const toolCallId = config?.toolCall?.id || "default_tool_call";
+
+      return new Command({
+        update: {
+          messages: [
+            new ToolMessage({
+              content: "Error searching the medical guidelines.",
+              tool_call_id: toolCallId,
+            }),
+          ],
+          needsReasoning: false,
+        },
+      });
     }
   }
 }

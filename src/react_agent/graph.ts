@@ -1,6 +1,11 @@
 //graph.ts
 import { AIMessage } from "@langchain/core/messages";
-import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
+import {
+  Annotation,
+  Command,
+  MessagesAnnotation,
+  StateGraph,
+} from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { RunnableConfig } from "@langchain/core/runnables";
 
@@ -8,40 +13,34 @@ import { ConfigurationSchema, ensureConfiguration } from "./configuration.js";
 import { FetchNextSentenceTool } from "./tools/fetch_next_sentence.js";
 import { GuidelineSearchTool } from "./tools/search_guideline.js";
 import { loadChatModel } from "./utils.js";
-import { MASTER_AGENT_PROMPT, USE_REASONING_PROMPT } from "./prompts.js";
+import { MASTER_AGENT_PROMPT } from "./prompts.js";
+import { applyReasoningNode } from "./tools/apply_reasoning.js";
+import { AnalysisOutput, ArticleSentence } from "./types.js";
+
+// Define our state schema using Annotation.Root
+export const AgentStateSchema = Annotation.Root({
+  // Include all fields from MessagesAnnotation
+  ...MessagesAnnotation.spec,
+  // Add our custom needsReasoning field
+  needsReasoning: Annotation<boolean>(),
+  article: Annotation<ArticleSentence>(),
+  analysisOutput: Annotation<AnalysisOutput>(),
+});
 
 // Define the function that calls the model
 async function masterAgent(
-  state: typeof MessagesAnnotation.State,
+  state: typeof AgentStateSchema.State,
   config: RunnableConfig,
-): Promise<typeof MessagesAnnotation.Update> {
+) {
   const configuration = ensureConfiguration(config);
   const messages = state.messages;
-  const lastMessage = messages[messages.length - 1] as AIMessage;
 
-  // Check if we need reasoning (i.e., if the last message was from the guideline search)
-  const needsReasoning =
-    lastMessage.tool_calls?.[0]?.name === "search_guidelines";
-
-  if (needsReasoning) {
-    console.log("[Graph] Needs reasoning");
+  if (state.needsReasoning) {
+    console.log("[Graph] Needs reasoning, using DeepSeek model first");
     // First use DeepSeek for reasoning
-    const reasoningModel = await loadChatModel("deepseek/deepseek-chat");
-    const reasoningMessage = {
-      role: "system",
-      content: USE_REASONING_PROMPT,
-    };
-    const reasoningResponse = await reasoningModel.invoke([
-      reasoningMessage,
-      ...messages,
-    ]);
-
-    // Add the reasoning as context for the next model call
-    messages.push(
-      new AIMessage({
-        content: `Analysis:\n${reasoningResponse.content}`,
-      }),
-    );
+    return new Command({
+      goto: "apply_reasoning",
+    });
   }
 
   // Then use the main model for tool calling
@@ -59,6 +58,7 @@ async function masterAgent(
 
   return {
     messages: [response],
+    needsReasoning: false, // Reset the flag after handling reasoning
   };
 }
 
@@ -95,13 +95,15 @@ const sentenceNode = new ToolNode([new FetchNextSentenceTool()]);
 // Define a new graph. We use the prebuilt MessagesAnnotation to define state:
 // https://langchain-ai.github.io/langgraphjs/concepts/low_level/#messagesannotation
 console.log("[Graph] Initializing workflow");
-const workflow = new StateGraph(MessagesAnnotation, ConfigurationSchema)
+const workflow = new StateGraph(AgentStateSchema, ConfigurationSchema)
   .addNode("masterAgent", masterAgent)
   .addNode("guidelinetool", guidelineNode)
   .addNode("fetch_nextsentence", sentenceNode)
+  .addNode("apply_reasoning", applyReasoningNode)
   .addEdge("__start__", "masterAgent")
   .addEdge("guidelinetool", "masterAgent")
   .addEdge("fetch_nextsentence", "masterAgent")
+  .addEdge("apply_reasoning", "masterAgent")
   .addConditionalEdges("masterAgent", routeModelOutput);
 
 // Finally, we compile it!
